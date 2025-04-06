@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Movie Booking</title>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const movieSelect = document.getElementById("movieSelect");
+      const theaterSelect = document.getElementById("theaterSelect");
+      const showtimeSelect = document.getElementById("showtimeSelect");
+      const seatRow = document.getElementById("seatRow");
+      const seatCol = document.getElementById("seatCol");
+      const nameInput = document.getElementById("name");
+
+      let moviesData = [];
+
+      fetch("http://localhost:8080/user/booking/movies")
+        .then(res => res.json())
+        .then(data => {
+          moviesData = data;
+          data.forEach(movie => {
+            const opt = document.createElement("option");
+            opt.value = movie.id;
+            opt.textContent = movie.title;
+            movieSelect.appendChild(opt);
+          });
+        });
+
+      movieSelect.addEventListener("change", () => {
+        theaterSelect.innerHTML = "<option>Select Theater</option>";
+        showtimeSelect.innerHTML = "<option>Select Showtime</option>";
+
+        const selectedMovie = moviesData.find(m => m.id == movieSelect.value);
+        selectedMovie.theater.forEach(theater => {
+          const opt = document.createElement("option");
+          opt.value = theater.id;
+          opt.textContent = `${theater.name} - ${theater.location}`;
+          theaterSelect.appendChild(opt);
+        });
+      });
+
+      theaterSelect.addEventListener("change", () => {
+        showtimeSelect.innerHTML = "<option>Select Showtime</option>";
+
+        const selectedMovie = moviesData.find(m => m.id == movieSelect.value);
+        const selectedTheater = selectedMovie.theater.find(t => t.id == theaterSelect.value);
+
+        selectedTheater.showtimes.forEach(showtime => {
+          const opt = document.createElement("option");
+          opt.value = showtime.showtime;
+          opt.textContent = showtime.showtime;
+          showtimeSelect.appendChild(opt);
+        });
+      });
+
+      document.getElementById("bookingForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const payload = {
+          movieId: parseInt(movieSelect.value),
+          movieName: movieSelect.options[movieSelect.selectedIndex].text,
+          theaterId: parseInt(theaterSelect.value),
+          theaterName: theaterSelect.options[theaterSelect.selectedIndex].text,
+          name: nameInput.value,
+          seats: [
+            {
+              seatRow: seatRow.value,
+              seatCol: parseInt(seatCol.value),
+              showtime: showtimeSelect.value
+            }
+          ]
+        };
+
+        fetch("http://localhost:8080/user/booking", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        })
+        .then(res => {
+          if (res.ok) return res.json();
+          throw new Error("Booking failed");
+        })
+        .then(data => {
+          alert("Booking successful!");
+          console.log(data);
+        })
+        .catch(err => {
+          alert("Error: " + err.message);
+        });
+      });
+    });
+  </script>
+</head>
+<body>
+  <h2>Movie Ticket Booking</h2>
+  <form id="bookingForm">
+    <label>Your Name: <input type="text" id="name" required /></label><br><br>
+    
+    <label>Movie: 
+      <select id="movieSelect" required>
+        <option>Select Movie</option>
+      </select>
+    </label><br><br>
+
+    <label>Theater: 
+      <select id="theaterSelect" required>
+        <option>Select Theater</option>
+      </select>
+    </label><br><br>
+
+    <label>Showtime:
+      <select id="showtimeSelect" required>
+        <option>Select Showtime</option>
+      </select>
+    </label><br><br>
+
+    <label>Seat Row: <input type="text" id="seatRow" required /></label><br><br>
+    <label>Seat Column: <input type="number" id="seatCol" required /></label><br><br>
+
+    <button type="submit">Book Ticket</button>
+  </form>
+</body>
+</html>

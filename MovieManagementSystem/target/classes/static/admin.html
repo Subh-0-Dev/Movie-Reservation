@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Movie</title>
+</head>
+<body>
+<h2>Add Movie</h2>
+<form id="movieForm">
+    <label>Title:</label>
+    <input type="text" id="title" required><br><br>
+
+    <label>Genre:</label>
+    <input type="text" id="genre" required><br><br>
+
+    <h3>Theaters</h3>
+    <div id="theaterContainer">
+        <div class="theater">
+            <label>Theater Name:</label>
+            <input type="text" class="theaterName" required>
+            <label>Location:</label>
+            <input type="text" class="theaterLocation" required>
+
+            <label>Showtimes (hold Ctrl to select multiple):</label>
+            <select class="showtimes" multiple required>
+                <option value="MORNING">Morning</option>
+                <option value="AFTERNOON">Afternoon</option>
+                <option value="EVENING">Evening</option>
+                <option value="NIGHT">Night</option>
+            </select>
+            <br><br>
+        </div>
+    </div>
+    <button type="button" onclick="addTheater()">Add Another Theater</button><br><br>
+    <button type="submit">Submit</button>
+</form>
+
+<script>
+    function addTheater() {
+        const container = document.getElementById("theaterContainer");
+        const theaterHTML = `
+            <div class="theater">
+                <label>Theater Name:</label>
+                <input type="text" class="theaterName" required>
+                <label>Location:</label>
+                <input type="text" class="theaterLocation" required>
+                <label>Showtimes (hold Ctrl to select multiple):</label>
+                <select class="showtimes" multiple required>
+                    <option value="MORNING">Morning</option>
+                    <option value="AFTERNOON">Afternoon</option>
+                    <option value="EVENING">Evening</option>
+                    <option value="NIGHT">Night</option>
+                </select>
+                <br><br>
+            </div>
+        `;
+        container.insertAdjacentHTML("beforeend", theaterHTML);
+    }
+
+    document.getElementById("movieForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const title = document.getElementById("title").value;
+        const genre = document.getElementById("genre").value;
+
+        const theaters = [];
+        document.querySelectorAll(".theater").forEach(theaterDiv => {
+            const name = theaterDiv.querySelector(".theaterName").value;
+            const location = theaterDiv.querySelector(".theaterLocation").value;
+            const showtimes = Array.from(theaterDiv.querySelector(".showtimes").selectedOptions)
+                .map(option => option.value);
+
+            theaters.push({
+                name,
+                location,
+                showtimes: showtimes.map(time => ({ showtime: time }))
+            });
+        });
+
+        const movieData = {
+            title,
+            genre,
+            theaters
+        };
+
+        console.log("Movie Data:", movieData);
+
+        // You can use fetch here to POST the data
+
+        fetch("http://localhost:8080/admin/add", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(movieData)
+        }).then(response => response.json())
+          .then(data => console.log(data));
+
+    });
+</script>
+</body>
+</html>
