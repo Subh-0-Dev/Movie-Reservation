@@ -22,6 +22,9 @@ public class Seats {
     private String seatRow;
     private int seatCol;
     
+    private Long movieId;
+    private Long theaterId;
+    
     @Enumerated(EnumType.STRING)
     private FixshowTime showtime;
     

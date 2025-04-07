@@ -18,9 +18,9 @@ public class Booking {
     private Long bookingId;
 
     private String name;
-    private Long movieId;
+    
     private String movieName;
-    private Long theaterId;
+
     private String theaterName;
     
     

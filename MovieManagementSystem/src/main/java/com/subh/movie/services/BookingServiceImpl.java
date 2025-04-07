@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import com.subh.movie.Entities.Booking;
+import com.subh.movie.Entities.FixshowTime;
 import com.subh.movie.Entities.Seats;
 import com.subh.movie.RequestDto.BookingDto;
 import com.subh.movie.RequestDto.SeatDto;
@@ -29,10 +30,10 @@ public class BookingServiceImpl implements BookingService{
 	public ResponseEntity<?> bookTicket(BookingDto request) {
 		Booking booking=new Booking();
 		
-		booking.setMovieId(request.getMovieId());
+		
 		booking.setMovieName(request.getMovieName());
 		booking.setName(request.getName());
-		booking.setTheaterId(request.getTheaterId());
+		
 		booking.setTheaterName(request.getTheaterName());
 		
 		
@@ -42,6 +43,8 @@ public class BookingServiceImpl implements BookingService{
 				if(seatRepository.findByShowtimeAndSeatRowAndSeatCol(seatData.getShowtime(),seatData.getSeatRow(), seatData.getSeatCol()).isEmpty()) {
 					seatDto.setSeatRow(seatData.getSeatRow());
 					seatDto.setSeatCol(seatData.getSeatCol());
+					seatDto.setMovieId(seatData.getMovieId());
+					seatDto.setTheaterId(seatData.getTheaterId());
 					seatDto.setShowtime(seatData.getShowtime());
 					
 					seatDto.setBookings(booking);
@@ -64,15 +67,11 @@ public class BookingServiceImpl implements BookingService{
 	}
 
 	@Override
-	public ResponseEntity<?> getTheaters(Long movieId) {
-		// TODO Auto-generated method stub
-		return null;
+	public List<?> getBookedSeat(Long movieId, Long theaterId, FixshowTime showtime) {
+		
+		return seatRepository.findByMovieIdAndTheaterIdAndShowtime(movieId, theaterId, showtime);
 	}
 
-	@Override
-	public ResponseEntity<?> getShowtimes(Long movieId, Long TheaterId) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+	
 
 }

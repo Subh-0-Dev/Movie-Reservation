@@ -11,5 +11,8 @@ public class SeatDto {
 	private String seatRow;
     private int seatCol;
     
+    private Long movieId;
+    private Long theaterId;
+    
     private FixshowTime showtime;
 }

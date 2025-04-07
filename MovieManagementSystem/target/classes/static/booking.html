@@ -1,19 +1,147 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
-  <title>Movie Booking</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Movie Ticket Booking</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: linear-gradient(to right, #ffdf5f, #c6c3c2);
+      font-family: Arial, sans-serif;
+    }
+
+    .main {
+      padding: 30px;
+      max-width: 700px;
+      margin: auto;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .head {
+      font-size: 36px;
+      color: rgba(27, 187, 160, 0.8);
+    }
+
+    label {
+      font-weight: bold;
+      display: block;
+      margin-top: 10px;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    .seat-grid {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: 8px;
+      margin-top: 20px;
+    }
+
+    .seat {
+      width: 40px;
+      height: 40px;
+      border-radius: 5px;
+      text-align: center;
+      line-height: 40px;
+      cursor: pointer;
+      background-color: #d5d5d5;
+    }
+
+    .seat.selected {
+      background-color: #4caf50;
+      color: white;
+    }
+
+    .seat.booked {
+      background-color: #e74c3c;
+      cursor: not-allowed;
+      color: white;
+    }
+
+    .btn {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .button {
+      padding: 10px 20px;
+      border: none;
+      background-color: rgba(27, 187, 160, 0.8);
+      color: white;
+      font-weight: bold;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .button:hover {
+      background-color: rgb(50, 87, 199);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="main">
+    <div class="header">
+      <h2 class="head">Movie Ticket Booking</h2>
+    </div>
+    <form id="bookingForm">
+      <label>Your Name:</label>
+      <input type="text" id="nameInput" required />
+
+      <label>Movie:</label>
+      <select id="movieSelect" required>
+        <option value="">Select Movie</option>
+      </select>
+
+      <label>Theater:</label>
+      <select id="theaterSelect" required>
+        <option value="">Select Theater</option>
+      </select>
+
+      <label>Showtime:</label>
+      <select id="showtimeSelect" required>
+        <option value="">Select Showtime</option>
+      </select>
+
+      <div class="seat-grid" id="seatGrid"></div>
+
+      <div class="btn">
+        <button class="button" type="submit">Book Ticket</button>
+      </div>
+    </form>
+  </div>
+
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       const movieSelect = document.getElementById("movieSelect");
       const theaterSelect = document.getElementById("theaterSelect");
       const showtimeSelect = document.getElementById("showtimeSelect");
-      const seatRow = document.getElementById("seatRow");
-      const seatCol = document.getElementById("seatCol");
-      const nameInput = document.getElementById("name");
+      const nameInput = document.getElementById("nameInput");
+      const seatGrid = document.getElementById("seatGrid");
 
       let moviesData = [];
+      let selectedSeats = [];
 
+      // Fetch movies
       fetch("http://localhost:8080/user/booking/movies")
         .then(res => res.json())
         .then(data => {
@@ -27,10 +155,14 @@
         });
 
       movieSelect.addEventListener("change", () => {
-        theaterSelect.innerHTML = "<option>Select Theater</option>";
-        showtimeSelect.innerHTML = "<option>Select Showtime</option>";
+        theaterSelect.innerHTML = "<option value=''>Select Theater</option>";
+        showtimeSelect.innerHTML = "<option value=''>Select Showtime</option>";
+        seatGrid.innerHTML = "";
+        selectedSeats = [];
 
         const selectedMovie = moviesData.find(m => m.id == movieSelect.value);
+        if (!selectedMovie) return;
+
         selectedMovie.theater.forEach(theater => {
           const opt = document.createElement("option");
           opt.value = theater.id;
@@ -40,10 +172,14 @@
       });
 
       theaterSelect.addEventListener("change", () => {
-        showtimeSelect.innerHTML = "<option>Select Showtime</option>";
+        showtimeSelect.innerHTML = "<option value=''>Select Showtime</option>";
+        seatGrid.innerHTML = "";
+        selectedSeats = [];
 
         const selectedMovie = moviesData.find(m => m.id == movieSelect.value);
-        const selectedTheater = selectedMovie.theater.find(t => t.id == theaterSelect.value);
+        const selectedTheater = selectedMovie?.theater.find(t => t.id == theaterSelect.value);
+
+        if (!selectedTheater) return;
 
         selectedTheater.showtimes.forEach(showtime => {
           const opt = document.createElement("option");
@@ -53,23 +189,72 @@
         });
       });
 
+      showtimeSelect.addEventListener("change", () => {
+        seatGrid.innerHTML = "";
+        selectedSeats = [];
+
+        const movieId = movieSelect.value;
+        const theaterId = theaterSelect.value;
+        const showtime = showtimeSelect.value;
+
+        if (!movieId || !theaterId || !showtime) return;
+
+        fetch(`http://localhost:8080/user/booked-seats?movieId=${movieId}&theaterId=${theaterId}&showtime=${showtime}`)
+          .then(res => res.json())
+          .then(bookedSeatCodes => renderSeatGrid(bookedSeatCodes));
+      });
+
+      function renderSeatGrid(bookedSeatCodes) {
+        const rows = ['A', 'B', 'C', 'D', 'E'];
+        const cols = 10;
+
+        for (let row of rows) {
+          for (let col = 1; col <= cols; col++) {
+            const seat = document.createElement("div");
+            const seatCode = row + col;
+            seat.classList.add("seat");
+            seat.textContent = seatCode;
+
+            if (bookedSeatCodes.includes(seatCode)) {
+              seat.classList.add("booked");
+            } else {
+              seat.addEventListener("click", () => {
+                seat.classList.toggle("selected");
+
+                const index = selectedSeats.findIndex(s => s.seatRow === row && s.seatCol === col);
+                if (index > -1) {
+                  selectedSeats.splice(index, 1);
+                } else {
+                  selectedSeats.push({ seatRow: row, seatCol: col });
+                }
+              });
+            }
+
+            seatGrid.appendChild(seat);
+          }
+        }
+      }
+
       document.getElementById("bookingForm").addEventListener("submit", function (e) {
         e.preventDefault();
 
         const payload = {
+          name: nameInput.value,
           movieId: parseInt(movieSelect.value),
           movieName: movieSelect.options[movieSelect.selectedIndex].text,
           theaterId: parseInt(theaterSelect.value),
           theaterName: theaterSelect.options[theaterSelect.selectedIndex].text,
-          name: nameInput.value,
-          seats: [
-            {
-              seatRow: seatRow.value,
-              seatCol: parseInt(seatCol.value),
-              showtime: showtimeSelect.value
-            }
-          ]
+          seats: selectedSeats.map(seat => ({
+            seatRow: seat.seatRow,
+            seatCol: seat.seatCol,
+            showtime: showtimeSelect.value
+          }))
         };
+
+        if (selectedSeats.length === 0) {
+          alert("Please select at least one seat.");
+          return;
+        }
 
         fetch("http://localhost:8080/user/booking", {
           method: "POST",
@@ -84,7 +269,7 @@
         })
         .then(data => {
           alert("Booking successful!");
-          console.log(data);
+          location.reload(); // Optionally refresh
         })
         .catch(err => {
           alert("Error: " + err.message);
@@ -92,34 +277,6 @@
       });
     });
   </script>
-</head>
-<body>
-  <h2>Movie Ticket Booking</h2>
-  <form id="bookingForm">
-    <label>Your Name: <input type="text" id="name" required /></label><br><br>
-    
-    <label>Movie: 
-      <select id="movieSelect" required>
-        <option>Select Movie</option>
-      </select>
-    </label><br><br>
-
-    <label>Theater: 
-      <select id="theaterSelect" required>
-        <option>Select Theater</option>
-      </select>
-    </label><br><br>
-
-    <label>Showtime:
-      <select id="showtimeSelect" required>
-        <option>Select Showtime</option>
-      </select>
-    </label><br><br>
-
-    <label>Seat Row: <input type="text" id="seatRow" required /></label><br><br>
-    <label>Seat Column: <input type="number" id="seatCol" required /></label><br><br>
-
-    <button type="submit">Book Ticket</button>
-  </form>
 </body>
+
 </html>
