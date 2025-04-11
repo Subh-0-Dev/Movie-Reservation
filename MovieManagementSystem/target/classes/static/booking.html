@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Movie Ticket Booking</title>
   <style>
     * {
@@ -247,7 +247,9 @@
           seats: selectedSeats.map(seat => ({
             seatRow: seat.seatRow,
             seatCol: seat.seatCol,
-            showtime: showtimeSelect.value
+            showtime: showtimeSelect.value,
+            movieId: parseInt(movieSelect.value),
+            theaterId: parseInt(theaterSelect.value)
           }))
         };
 
@@ -263,17 +265,17 @@
           },
           body: JSON.stringify(payload)
         })
-        .then(res => {
-          if (res.ok) return res.json();
-          throw new Error("Booking failed");
-        })
-        .then(data => {
-          alert("Booking successful!");
-          location.reload(); // Optionally refresh
-        })
-        .catch(err => {
-          alert("Error: " + err.message);
-        });
+          .then(res => {
+            if (res.ok) return res.json();
+            throw new Error("Booking failed");
+          })
+          .then(data => {
+            alert("Booking successful!");
+            location.reload(); // Optional refresh
+          })
+          .catch(err => {
+            alert("Error: " + err.message);
+          });
       });
     });
   </script>
